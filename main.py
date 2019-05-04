@@ -160,7 +160,7 @@ def train(epoch):
         loss.backward()  # Backward Propagation
         optimizer.step() # Optimizer update
 
-        train_loss += loss.data[0]
+        train_loss += loss.item()
         _, predicted = torch.max(outputs.data, 1)
         total += targets.size(0)
         correct += predicted.eq(targets.data).cpu().sum()
@@ -168,7 +168,7 @@ def train(epoch):
         sys.stdout.write('\r')
         sys.stdout.write('| Epoch [%3d/%3d] Iter[%3d/%3d]\t\tLoss: %.4f Acc@1: %.3f%%'
                 %(epoch, num_epochs, batch_idx+1,
-                    (len(trainset)//batch_size)+1, loss.data[0], 100.*correct/total))
+                    (len(trainset)//batch_size)+1, loss.item(), 100.*correct/total))
         sys.stdout.flush()
 
 def test(epoch):
@@ -184,14 +184,14 @@ def test(epoch):
         outputs = net(inputs)
         loss = criterion(outputs, targets)
 
-        test_loss += loss.data[0]
+        test_loss += loss.item()
         _, predicted = torch.max(outputs.data, 1)
         total += targets.size(0)
         correct += predicted.eq(targets.data).cpu().sum()
 
     # Save checkpoint when best model
     acc = 100.*correct/total
-    print("\n| Validation Epoch #%d\t\t\tLoss: %.4f Acc@1: %.2f%%" %(epoch, loss.data[0], acc))
+    print("\n| Validation Epoch #%d\t\t\tLoss: %.4f Acc@1: %.2f%%" %(epoch, loss.item(), acc))
 
     if acc > best_acc:
         print('| Saving Best model...\t\t\tTop1 = %.2f%%' %(acc))
@@ -207,6 +207,7 @@ def test(epoch):
             os.mkdir(save_point)
         torch.save(state, save_point+file_name+'.t7')
         best_acc = acc
+    return acc
 
 print('\n[Phase 3] : Training model')
 print('| Training Epochs = ' + str(num_epochs))
@@ -218,11 +219,23 @@ for epoch in range(start_epoch, start_epoch+num_epochs):
     start_time = time.time()
 
     train(epoch)
-    test(epoch)
+    acc = test(epoch)
 
     epoch_time = time.time() - start_time
     elapsed_time += epoch_time
     print('| Elapsed time : %d:%02d:%02d'  %(cf.get_hms(elapsed_time)))
+    print('| Saving model for epoch %d...\t\t\tTop1 = %.2f%%' %(epoch, acc))
+    state = {
+            'net':net.module if use_cuda else net,
+            'acc':acc,
+            'epoch':epoch,
+    }
+    if not os.path.isdir('checkpoint'):
+        os.mkdir('checkpoint')
+    save_point = './checkpoint/'+args.dataset+os.sep
+    if not os.path.isdir(save_point):
+        os.mkdir(save_point)
+    torch.save(state, save_point+file_name+"-epoch-"+str(epoch)+'.t7')
 
 print('\n[Phase 4] : Testing model')
 print('* Test results : Acc@1 = %.2f%%' %(best_acc))
