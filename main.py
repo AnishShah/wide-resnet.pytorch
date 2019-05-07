@@ -90,7 +90,7 @@ if (args.testOnly):
     print('\n[Test Phase] : Model setup')
     assert os.path.isdir('checkpoint'), 'Error: No checkpoint directory found!'
     _, file_name = getNetwork(args)
-    checkpoint = torch.load('./checkpoint/'+args.dataset+os.sep+file_name+'.t7')
+    checkpoint = torch.load('./checkpoint/'+args.dataset+os.sep+file_name+'.t7', map_location='cpu')
     net = checkpoint['net']
 
     if use_cuda:
@@ -112,6 +112,7 @@ if (args.testOnly):
         _, predicted = torch.max(outputs.data, 1)
         total += targets.size(0)
         correct += predicted.eq(targets.data).cpu().sum()
+        break
 
     acc = 100.*correct/total
     print("| Test Result\tAcc@1: %.2f%%" %(acc))
