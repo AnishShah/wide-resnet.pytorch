@@ -112,7 +112,6 @@ for batch_idx, (inputs, targets) in enumerate(trainloader):
 
     for idx, output in enumerate(outputs):
         layer_data[targets.data.numpy()[idx]].append(output)
-    break
 
 for key in layer_data:
     layer_data[key] = np.mean(np.array(layer_data[key])[:, :, 0, 0], axis=0)
