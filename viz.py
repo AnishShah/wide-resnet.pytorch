@@ -19,6 +19,7 @@ import datetime
 from networks import *
 from torch.autograd import Variable
 from collections import defaultdict
+from scipy.cluster.hierarchy import dendrogram, linkage
 
 import matplotlib.pyplot as plt
 
@@ -27,6 +28,7 @@ parser.add_argument('--net_type', default='wide-resnet', type=str, help='model')
 parser.add_argument('--depth', default=28, type=int, help='depth of model')
 parser.add_argument('--dataset', default='cifar10', type=str, help='dataset = [cifar10/cifar100]')
 parser.add_argument('--epoch', required=True, type=int, help='epoch number')
+parser.add_argument('--viz', required=True, default='dendo', choices=('dendo', 'bar'))
 args = parser.parse_args()
 
 # Hyper Parameter settings
@@ -112,20 +114,34 @@ for batch_idx, (inputs, targets) in enumerate(trainloader):
 
     for idx, output in enumerate(outputs):
         layer_data[targets.data.numpy()[idx]].append(output)
+    break
 
 for key in layer_data:
     layer_data[key] = np.mean(np.array(layer_data[key])[:, :, 0, 0], axis=0)
 
-plt.figure(figsize=(20, 10))
-for i in range(10):
-    plt.subplot(10, 1, i+1)
-    mn = layer_data[i].min()
-    mx = layer_data[i].max()
-    plt.ylim([mn, mx])
-    plt.xticks([])
-    plt.yticks([])
-    plt.bar(range(layer_data[i].shape[0]), layer_data[i])
-    plt.ylabel(cf.classes[i])
-    if i == 0:
-        plt.title("Epoch {}".format(args.epoch))
-plt.savefig("penultimate layer - epoch - {}.png".format(args.epoch))
+if args.viz == 'bar':
+    plt.figure(figsize=(20, 10))
+    for i in range(10):
+        plt.subplot(10, 1, i+1)
+        mn = layer_data[i].min()
+        mx = layer_data[i].max()
+        plt.ylim([mn, mx])
+        plt.xticks([])
+        plt.yticks([])
+        plt.bar(range(layer_data[i].shape[0]), layer_data[i])
+        plt.ylabel(cf.classes[i])
+        if i == 0:
+            plt.title("Epoch {}".format(args.epoch))
+    plt.savefig("results/penultimate layer bar - epoch - {}.png".format(args.epoch))
+elif args.viz == 'dendo':
+    rep = []
+    for i in range(10):
+        rep.append(layer_data[i])
+    rep = np.array(rep)
+    linked = linkage(rep, 'single')
+    mx = linked[:, 2].max() + 0.1
+    plt.ylim([0, mx])
+    plt.title("Epoch {}".format(args.epoch))
+    plt.ylabel("Euclidean Distance")
+    dendrogram(linked, labels=cf.classes, color_threshold=0)
+    plt.savefig("results/penultimate layer dendo - epoch - {}.png".format(args.epoch))
