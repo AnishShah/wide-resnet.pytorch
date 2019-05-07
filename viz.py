@@ -21,6 +21,8 @@ from torch.autograd import Variable
 from collections import defaultdict
 from scipy.cluster.hierarchy import dendrogram, linkage
 
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR-10 Training')
@@ -95,13 +97,9 @@ net = checkpoint['net']
 
 if use_cuda:
     net.cuda()
-    net = torch.nn.DataParallel(net, device_ids=range(torch.cuda.device_count()))
+    #net = torch.nn.DataParallel(net, device_ids=range(torch.cuda.device_count()))
     cudnn.benchmark = True
 
-net.eval()
-test_loss = 0
-correct = 0
-total = 0
 
 model = nn.Sequential(*list(net.features.children()))
 layer_data = defaultdict(list)
@@ -110,10 +108,10 @@ for batch_idx, (inputs, targets) in enumerate(trainloader):
         inputs, targets = inputs.cuda(), targets.cuda()
     inputs, targets = Variable(inputs, volatile=True), Variable(targets)
 
-    outputs = model(inputs).data.numpy()
+    outputs = model(inputs).cpu().data.numpy()
 
     for idx, output in enumerate(outputs):
-        layer_data[targets.data.numpy()[idx]].append(output)
+        layer_data[targets.cpu().data.numpy()[idx]].append(output)
 
 for key in layer_data:
     layer_data[key] = np.mean(np.array(layer_data[key])[:, :, 0, 0], axis=0)
