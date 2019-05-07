@@ -129,7 +129,7 @@ if args.viz == 'bar':
         plt.ylabel(cf.classes[i])
         if i == 0:
             plt.title("Epoch {}".format(args.epoch))
-    plt.savefig("results/penultimate layer bar - epoch - {}.png".format(args.epoch))
+    plt.savefig("results/penultimate layer - epoch - {} - bar.png".format(args.epoch))
 elif args.viz == 'dendo':
     rep = []
     for i in range(10):
@@ -141,4 +141,4 @@ elif args.viz == 'dendo':
     plt.title("Epoch {}".format(args.epoch))
     plt.ylabel("Euclidean Distance")
     dendrogram(linked, labels=cf.classes, color_threshold=0)
-    plt.savefig("results/penultimate layer dendo - epoch - {}.png".format(args.epoch))
+    plt.savefig("results/penultimate layer epoch - {} - dendo.png".format(args.epoch))
