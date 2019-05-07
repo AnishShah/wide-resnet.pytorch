@@ -20,6 +20,7 @@ from networks import *
 from torch.autograd import Variable
 from collections import defaultdict
 from scipy.cluster.hierarchy import dendrogram, linkage
+from sklearn.decomposition import PCA
 
 import matplotlib
 matplotlib.use('Agg')
@@ -30,7 +31,7 @@ parser.add_argument('--net_type', default='wide-resnet', type=str, help='model')
 parser.add_argument('--depth', default=28, type=int, help='depth of model')
 parser.add_argument('--dataset', default='cifar10', type=str, help='dataset = [cifar10/cifar100]')
 parser.add_argument('--epoch', required=True, type=int, help='epoch number')
-parser.add_argument('--viz', required=True, default='dendo', choices=('dendo', 'bar'))
+parser.add_argument('--viz', required=True, default='dendo', choices=('dendo', 'bar', 'pca'))
 args = parser.parse_args()
 
 # Hyper Parameter settings
@@ -142,3 +143,11 @@ elif args.viz == 'dendo':
     plt.ylabel("Euclidean Distance")
     dendrogram(linked, labels=cf.classes, color_threshold=0)
     plt.savefig("results/penultimate layer epoch - {} - dendo.png".format(args.epoch))
+elif args.viz == 'pca':
+    rep = []
+    for i in range(10):
+        rep.append(layer_data[i])
+    rep = np.array(rep)
+    pca = PCA(n_components=2)
+    new_rep = pca.fit_transform(rep)
+    np.save("results/penultimate layer epoch - {} - pca".format(args.epoch), new_rep)
